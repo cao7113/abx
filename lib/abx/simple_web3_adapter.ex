@@ -122,6 +122,7 @@ defmodule ABX.SimpleWeb3Adapter do
       end
 
       def decode_value("0x" <> return_value, return_types) do
+        raise "hit unknown decode-value with #{return_types|>IO.inspect}"
         {:ok, data} = Base.decode16(return_value, case: :mixed)
         ABX.Decoder.decode_data(data, return_types)
       end
