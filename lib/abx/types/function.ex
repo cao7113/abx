@@ -5,7 +5,8 @@ defmodule ABX.Types.Function do
     :outputs,
     :constant,
     :payable,
-    :state_mutability
+    :state_mutability,
+    :method_hash
   ]
 
   alias ABX.Types.{Address, Hash, Data, HexDigit}
@@ -88,6 +89,8 @@ defmodule ABX.Types.Function do
           Keyword.merge([to: @contract_address], opts)
         )
       end
+
+      @functions {unquote(selector), unquote(abi_name)}
     end
   end
 
@@ -118,6 +121,8 @@ defmodule ABX.Types.Function do
 
         {{:eth_call, [tco, block]}, unquote(Macro.escape(return_types))}
       end
+
+      @functions {unquote(selector), unquote(abi_name)}
     end
   end
 

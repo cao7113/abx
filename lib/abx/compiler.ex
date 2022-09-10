@@ -39,6 +39,11 @@ defmodule ABX.Compiler do
       unquote(event_definitions)
 
       @events_lookup Map.new(@events)
+      def events do
+        @events
+        |> Enum.sort_by(&elem(&1, 1))
+      end
+      def events_lookup, do: @events_lookup
 
       def lookup(event_signature) do
         @events_lookup[event_signature]
@@ -54,7 +59,18 @@ defmodule ABX.Compiler do
         end
       end
 
+      Module.register_attribute(__MODULE__, :functions, accumulate: true)
       unquote(function_definitions)
+      def functions do
+        @functions
+        |> Enum.sort_by(&elem(&1, 1))
+      end
+      @functions_lookup Map.new(@functions)
+      def functions_lookup, do: @functions_lookup
+
+      def lookup_function(selector) do
+        @functions_lookup[selector]
+      end
     end
   end
 
@@ -88,13 +104,16 @@ defmodule ABX.Compiler do
   end
 
   def parse_abi(%{type: "function"} = abi) do
+    inputs = parse_function_params(abi.name, abi.inputs)
+
     %ABX.Types.Function{
       name: String.to_atom(abi.name),
       inputs: parse_params(abi.inputs),
       outputs: parse_params(abi.outputs),
       constant: abi[:constant],
       payable: abi[:payable],
-      state_mutability: parse_state_mutability(abi[:stateMutability])
+      state_mutability: parse_state_mutability(abi[:stateMutability]),
+      method_hash: calc_signature(abi.name, inputs)
     }
   end
 
@@ -117,6 +136,13 @@ defmodule ABX.Compiler do
       end
 
       {String.to_atom(name), ABX.parse_type(type_def), [indexed: indexed]}
+    end)
+  end
+
+  def parse_function_params(_func_name, type_defs) do
+    type_defs
+    |> Enum.map(fn %{name: name} = type_def ->
+      {String.to_atom(name), ABX.parse_type(type_def), []}
     end)
   end
 
