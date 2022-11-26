@@ -33,6 +33,8 @@ defmodule ABX.Web3API do
 
       def_web3 :eth_gasPrice, [], :hex
 
+      def_web3 :eth_estimateGas, [txn, block], :hex
+
       def_web3 :eth_getTransactionCount, [address, block], :hex
 
       def_web3 :eth_sendRawTransaction, [signed_txn], :raw
