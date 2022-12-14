@@ -1,10 +1,13 @@
 defmodule ABX.SimpleWeb3Adapter do
   @callback post(
               url :: String.t(),
-              body :: String.t(),
+              body :: map() | [map()],
               headers :: Keyword.t(),
               opts :: Keyword.t()
             ) :: {:ok, map()} | {:error, term()}
+
+  @callback http_endpoint() :: String.t()
+  @optional_callbacks http_endpoint: 0
 
   defmacro __using__(_opts) do
     quote do
@@ -13,9 +16,10 @@ defmodule ABX.SimpleWeb3Adapter do
 
       require Logger
 
-      def json_rpc(web3_endpoint, jsonrpc_payload, opts) do
-        with {:ok, payload} <- Jason.encode(jsonrpc_payload),
-             {:ok, %{status_code: 200} = resp} <-
+      def http_endpoint(), do: raise("callback impl. not found")
+
+      def json_rpc(web3_endpoint, payload, opts) do
+        with {:ok, %{status_code: 200} = resp} <-
                post(
                  web3_endpoint,
                  payload,
@@ -26,7 +30,10 @@ defmodule ABX.SimpleWeb3Adapter do
           {:ok, result}
         else
           {:ok, %{error: %{code: code, message: message}}} ->
-            Logger.error("JSONRPC error #{web3_endpoint} #{inspect(jsonrpc_payload)}: #{code} #{message}")
+            Logger.error(
+              "JSONRPC code error #{web3_endpoint} #{inspect(payload)}: #{code} #{message}"
+            )
+
             {:error, code, message}
 
           {:ok, decoded} when is_list(decoded) ->
@@ -40,11 +47,15 @@ defmodule ABX.SimpleWeb3Adapter do
             {:ok, results}
 
           {:error, error} ->
-            Logger.error("JSONRPC error #{web3_endpoint} #{inspect(jsonrpc_payload)}: #{inspect(error)}")
+            Logger.error("JSONRPC error #{web3_endpoint} #{inspect(payload)}: #{inspect(error)}")
+
             {:error, error}
 
           error ->
-            Logger.error("JSONRPC error #{web3_endpoint} #{inspect(jsonrpc_payload)}: #{inspect(error)}")
+            Logger.error(
+              "JSONRPC unknown error #{web3_endpoint} #{inspect(payload)}: #{inspect(error)}"
+            )
+
             {:error, :unknown_error}
         end
       end
@@ -127,6 +138,7 @@ defmodule ABX.SimpleWeb3Adapter do
       end
 
       use ABX.Web3API
+      defoverridable ABX.SimpleWeb3Adapter
     end
   end
 end
