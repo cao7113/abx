@@ -11,6 +11,7 @@ defmodule ABX.Decoder do
     types
     |> Enum.reduce_while({offset, []}, fn
       type, {off, acc} ->
+
         case decode_type(data, type, off) do
           {:ok, value, new_off} ->
             {:cont, {new_off, [value | acc]}}
@@ -27,7 +28,8 @@ defmodule ABX.Decoder do
 
   @spec decode_type(binary(), term(), binary()) :: {:ok, term(), binary()} | :error
   def decode_type(data, :address, offset) do
-    <<_::bytes-size(offset), address::256, _::binary()>> = data
+    <<_::bytes-size(offset), address::256, _::binary>> = data
+
     case ABX.Types.Address.cast(address) do
       {:ok, address} ->
         {:ok, address, offset + 32}
@@ -38,18 +40,20 @@ defmodule ABX.Decoder do
   end
 
   def decode_type(data, {:uint, _size}, offset) do
-    <<_::bytes-size(offset), uint::256, _::binary()>> = data
+    <<_::bytes-size(offset), uint::256, _::binary>> = data
     {:ok, uint, offset + 32}
   end
 
   def decode_type(data, :bool, offset) do
-    <<_::bytes-size(offset), bool::256, _::binary()>> = data
+    <<_::bytes-size(offset), bool::256, _::binary>> = data
     {:ok, bool > 0, offset + 32}
   end
 
   for i <- 1..32 do
     def decode_type(data, {:bytes, unquote(i)}, offset) do
-      <<_::bytes-size(offset), bytes::bytes-size(unquote(i)), _padding::bytes-size(unquote(32 - i))>> = data
+      <<_::bytes-size(offset), bytes::bytes-size(unquote(i)),
+        _padding::bytes-size(unquote(32 - i)), _::bytes>> = data
+
       case ABX.Types.Bytes.cast(bytes) do
         {:ok, bytes} ->
           {:ok, bytes, offset + 32}
@@ -68,7 +72,7 @@ defmodule ABX.Decoder do
   end
 
   def decode_type(data, {:int, 256}, offset) do
-    <<_::bytes-size(offset), int::signed-256, _::binary()>> = data
+    <<_::bytes-size(offset), int::signed-256, _::binary>> = data
     {:ok, int, offset + 32}
   end
 
@@ -79,8 +83,9 @@ defmodule ABX.Decoder do
   end
 
   def decode_type(data, :bytes, offset) do
-    <<_::bytes-size(offset), bytes_offset::256, _::binary()>> = data
-    <<_skipped::bytes-size(bytes_offset), len::256, bytes::bytes-size(len), _::bytes()>> = data
+    <<_::bytes-size(offset), bytes_offset::256, _::binary>> = data
+    <<_skipped::bytes-size(bytes_offset), len::256, bytes::bytes-size(len), _::bytes>> = data
+
     case ABX.Types.Data.cast(bytes) do
       {:ok, bytes} ->
         {:ok, bytes, offset + 32}
@@ -91,14 +96,14 @@ defmodule ABX.Decoder do
   end
 
   def decode_type(data, :string, offset) do
-    <<_::bytes-size(offset), str_offset::256, _::bytes()>> = data
-    <<_skipped::bytes-size(str_offset), len::256, string::bytes-size(len), _::bytes()>> = data
+    <<_::bytes-size(offset), str_offset::256, _::bytes>> = data
+    <<_skipped::bytes-size(str_offset), len::256, string::bytes-size(len), _::bytes>> = data
     {:ok, string, offset + 32}
   end
 
   def decode_type(data, {:array, inner_type}, offset) do
-    <<_::bytes-size(offset), array_offset::256, _::binary()>> = data
-    <<_skipped::bytes-size(array_offset), len::256, rest::bytes()>> = data
+    <<_::bytes-size(offset), array_offset::256, _::binary>> = data
+    <<_skipped::bytes-size(array_offset), len::256, rest::bytes>> = data
 
     case decode_data(rest, List.duplicate(inner_type, len), 0) do
       {:ok, values, _inner_offset} ->
