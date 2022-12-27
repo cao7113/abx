@@ -63,10 +63,15 @@ defmodule ABX.SimpleWeb3Adapter do
       def batch_request(web3_endpoint, batch, opts \\ []) do
         {requests, return_types} = Enum.unzip(batch)
 
+        # batched_request =
+        #   for {method, params} <- requests do
+        #     %{id: "1", jsonrpc: "2.0", method: method, params: params}
+        #   end
         batched_request =
-          for {method, params} <- requests do
-            %{id: "1", jsonrpc: "2.0", method: method, params: params}
-          end
+          requests
+          |> Enum.with_index(fn {method, params}, idx ->
+            %{id: idx + 1, jsonrpc: "2.0", method: method, params: params}
+          end)
 
         with {:ok, return_values} <- json_rpc(web3_endpoint, batched_request, opts) do
           results =
