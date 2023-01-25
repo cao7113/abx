@@ -16,9 +16,11 @@ defmodule ABX.SimpleWeb3Adapter do
 
       require Logger
 
-      def http_endpoint(), do: raise("callback impl. not found")
+      def http_endpoint(), do: raise("callback implementation not found")
 
       def json_rpc(web3_endpoint, payload, opts) do
+        web3_endpoint = opts[:url] || web3_endpoint
+
         with {:ok, %{status_code: 200} = resp} <-
                post(
                  web3_endpoint,
