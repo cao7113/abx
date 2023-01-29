@@ -16,7 +16,7 @@ defmodule ABX.SimpleWeb3Adapter do
 
       require Logger
 
-      def http_endpoint(), do: raise("callback implementation not found")
+      def http_endpoint(), do: raise("callback http_endpoint not implemented")
 
       def json_rpc(web3_endpoint, payload, opts) do
         web3_endpoint = opts[:url] || web3_endpoint
@@ -42,14 +42,20 @@ defmodule ABX.SimpleWeb3Adapter do
             results =
               decoded
               |> Enum.map(fn
-                %{result: result} -> result
-                _ -> nil
+                %{result: result} ->
+                  result
+
+                reason ->
+                  Logger.error("JSONRPC decoded error: #{reason |> inspect}")
+                  nil
               end)
 
             {:ok, results}
 
           {:error, error} ->
-            Logger.error("JSONRPC error #{web3_endpoint} #{inspect(payload)}: #{inspect(error)}")
+            Logger.error(
+              "JSONRPC request error #{web3_endpoint} #{inspect(payload)}: #{inspect(error)}"
+            )
 
             {:error, error}
 
@@ -82,14 +88,19 @@ defmodule ABX.SimpleWeb3Adapter do
             |> Enum.zip(return_types)
             |> Enum.map(fn {return_value, return_type} ->
               case decode_value(return_value, return_type) do
-                {:ok, result} -> unwrap(result)
-                _ -> nil
+                {:ok, result} ->
+                  unwrap(result)
+
+                reason ->
+                  Logger.error("batch_request decode_value error: #{reason |> inspect}")
+                  nil
               end
             end)
 
           {:ok, results}
         else
-          _ ->
+          reason ->
+            Logger.error("batch_request JSONRPC error: #{reason |> inspect}")
             {:error, :request_failed}
         end
       end
