@@ -2,6 +2,7 @@
 version: "3"
 tasks:
   sh: iex -S mix
+  default: mix test
 
   setup:
     cmds:
