@@ -32,10 +32,16 @@ defmodule ABX.Sigils do
   end
 
   def sigil_g(gwei_string, []) do
-    String.to_integer(gwei_string) * 10 ** 9
+    gw = String.to_integer(gwei_string)
+
+    (gw * :math.pow(10, 9))
+    |> trunc()
   end
 
   def sigil_g(wei_string, [?r]) do
-    (String.to_integer(wei_string) / 10 ** 9) |> trunc
+    w = String.to_integer(wei_string)
+
+    (w * :math.pow(10, -9))
+    |> trunc()
   end
 end
