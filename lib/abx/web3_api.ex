@@ -78,7 +78,7 @@ defmodule ABX.Web3API do
       end
 
       def unquote(req_sname)(unquote_splicing(params), opts \\ []) do
-        ep = opts[:http_endpoint] || http_endpoint()
+        ep = opts[:http_endpoint] || opts[:rpc_endpoint] || opts[:endpoint] || http_endpoint()
         request(ep, {{unquote(method), unquote(params)}, unquote(return_type)}, opts)
       end
 
