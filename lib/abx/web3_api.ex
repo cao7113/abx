@@ -73,8 +73,8 @@ defmodule ABX.Web3API do
         {{unquote(method), unquote(params)}, unquote(return_type)}
       end
 
-      def unquote(method)(web3_endpoint, unquote_splicing(params)) do
-        request(web3_endpoint, {{unquote(method), unquote(params)}, unquote(return_type)})
+      def unquote(method)(web3_endpoint, unquote_splicing(params), opts \\ []) do
+        request(web3_endpoint, {{unquote(method), unquote(params)}, unquote(return_type)}, opts)
       end
 
       def unquote(req_sname)(unquote_splicing(params), opts \\ []) do
